@@ -279,16 +279,28 @@ Uses prefix (as PREFIX) to choose where to display it:
                                       "\n@enduml")))
 
 (defun plantuml-preview-current-block (prefix)
-  "Preview diagram from the PlantUML sources from the previous @startuml to the next @enduml.
+  "Preview diagram from the PlantUML sources
+from the previous '@startuml' or 'newpage'
+to the next '@enduml' or 'newpage'.
 Uses prefix (as PREFIX) to choose where to display it:
 - 4  (when prefixing the command with C-u) -> new window
 - 16 (when prefixing the command with C-u C-u) -> new frame.
 - else -> new buffer"
   (interactive "p")
-  (save-restriction
-    (narrow-to-region
-     (search-backward "@startuml") (search-forward "@enduml"))
-    (plantuml-preview-buffer prefix)))
+  (save-excursion
+    (save-restriction
+      (let (
+            (block-beginning
+             (progn (search-backward-regexp "\\(^\s*\\(@startuml\\|newpage\\)\\)")
+                    (forward-char (length (match-string 1)))
+                    (point)))
+            (block-end
+             (progn (search-forward-regexp "\\(^\s*\\(@enduml\\|newpage\\)\\)")
+                    (backward-char (length (match-string 1)))
+                    (point))))
+        (narrow-to-region block-beginning block-end)
+        (plantuml-preview-buffer prefix)))))
+
 
 (defun plantuml-preview (prefix)
   "Preview diagram from the PlantUML sources.
